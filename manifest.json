@@ -1,0 +1,23 @@
+{
+  "name": "Audio Mood Visualizer",
+  "description": "Converts audio into dynamic visuals in real time to improve your mood.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "options_page": "options/options.html",
+  "permissions": ["storage"]
+}
