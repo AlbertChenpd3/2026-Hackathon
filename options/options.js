@@ -9,13 +9,15 @@ function saveOptions() {
 }
 function loadOptions() {    
     chrome.storage.sync.get(["enabled"], (result) => {
-        if (result) document.getElementById("enabled").checked = result.enabled;
+        document.getElementById("enabled").checked = result.enabled;
     });
     chrome.storage.sync.get(options, (result) => {
         options.forEach(e => {
-            if (result[e]) document.getElementById(e).value = result[e];
+            document.getElementById(e).value = result[e];
         });
     });
 }
 document.addEventListener('DOMContentLoaded', loadOptions);
-document.getElementById('save').addEventListener('click', saveOptions);
+["enabled", "curr", "goal"].forEach(e => {
+    document.getElementById(e).addEventListener('change', saveOptions);
+});

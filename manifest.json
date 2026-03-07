@@ -19,5 +19,5 @@
     "open_in_tab": true
   },
   "options_page": "options/options.html",
-  "permissions": ["storage"]
+  "permissions": ["storage", "tabCapture"]
 }

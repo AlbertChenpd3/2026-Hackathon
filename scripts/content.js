@@ -1,6 +1,13 @@
 var enabled = true;
+var interval;
+chrome.storage.sync.get(["enabled"], (result) => {
+    enabled = result.enabled;
+    if (enabled) interval = setInterval(update, 50);
+    overlay.style.visibility = enabled ? "visible" : "hidden";
+});
 
 const overlay = document.createElement("div");
+overlay.style.visibility = "hidden";
 overlay.style.position = "fixed";
 overlay.style.top = "0px";
 overlay.style.left = "0px";
@@ -16,16 +23,11 @@ document.querySelector("body").insertAdjacentElement("afterend", overlay);
 var update = ()=>{
     overlay.style.filter = `hue-rotate(${Date.now()/100%360}deg)`
 }
-var interval = setInterval(update, 50);
 update();
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
     for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
         if (key === 'enabled') {
-            console.log(
-                `Storage key "${key}" in namespace "${namespace}" changed.`,
-                `Old value was "${oldValue}", new value is "${newValue}".`
-            );
             enabled = newValue;
             overlay.style.visibility = enabled ? "visible" : "hidden";
             if (enabled) interval = setInterval(update, 100);
