@@ -11,13 +11,14 @@
       "js": ["scripts/content.js"],
       "matches": [
         "<all_urls>"
-      ]
+      ],
+      "run_at": "document_start"
     }
   ],
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
   },
-  "options_page": "options/options.html",
-  "permissions": ["storage", "tabCapture"]
+  "permissions": ["storage", "tabCapture", "activeTab", "scripting", "offscreen"],
+  "background": {"service_worker": "scripts/background.js"}
 }
