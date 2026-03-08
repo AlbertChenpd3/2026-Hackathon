@@ -16,7 +16,7 @@ async function startCapture(streamId, tabId) {
   const audioContext = new AudioContext();
   const source = audioContext.createMediaStreamSource(stream);
   const analyser = audioContext.createAnalyser();
-  analyser.fftSize = 2048;
+  analyser.fftSize = 256;
   source.connect(analyser);
   source.connect(audioContext.destination);
 

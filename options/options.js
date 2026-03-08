@@ -1,4 +1,4 @@
-const options = ["curr", "goal", "opacity"];
+const options = ["curr", "goal", "opacity", "opacity2", "direction"];
 function saveOptions() {
     chrome.storage.sync.set({enabled: document.getElementById("enabled").checked});
     var x = {}
@@ -18,6 +18,6 @@ function loadOptions() {
     });
 }
 document.addEventListener('DOMContentLoaded', loadOptions);
-["enabled", "curr", "goal", "opacity"].forEach(e => {
+["enabled", "curr", "goal", "opacity", "opacity2", "direction"].forEach(e => {
     document.getElementById(e).addEventListener('change', saveOptions);
 });

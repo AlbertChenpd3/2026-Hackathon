@@ -9,7 +9,7 @@
     <br>
 
     <label for="curr">Current mood</label>
-    <select name="curr" id="curr">
+    <select name="curr" id="curr" value="Calm">
         <option value="Calm">Calm</option>
         <option value="Energized">Energized</option>
         <option value="Inspired">Inspired</option>
@@ -23,7 +23,7 @@
     <br>
 
     <label for="goal">Goal mood</label>
-    <select name="goal" id="goal">
+    <select name="goal" id="goal" value="Calm">
         <option value="Calm">Calm</option>
         <option value="Energized">Energized</option>
         <option value="Inspired">Inspired</option>
@@ -36,8 +36,22 @@
     </select>
     <br>
 
-    <label for="opacity">Overlay opacity</label>
-    <input type="range" min="0" max="100" value="50" class="slider" id="opacity">
+    <label for="opacity">Edge overlay opacity</label>
+    <input type="range" min="0" max="100" value="100" class="slider" id="opacity">
+    <br>
+    
+    <label for="opacity2">Main overlay opacity</label>
+    <input type="range" min="0" max="100" value="100" class="slider" id="opacity2">
+    <br>
+    
+    <label for="direction">Movement Direction</label>
+    <select name="direction" id="direction" value="both">
+        <option value="both">Both horizontal and vertical</option>
+        <option value="horiz">Horizontal only</option>
+        <option value="vert">Vertical only</option>
+        <option value="diag">Diagonal only</option>
+        <option value="static">Static</option>
+    </select>
 
     <script src="options.js"></script>
   </body>
