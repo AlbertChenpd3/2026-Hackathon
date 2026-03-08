@@ -20,6 +20,7 @@ overlay.style.userSelect = "none";
 overlay.style.pointerEvents = "none";
 overlay.style.mixBlendMode = "hard-light";
 overlay.style.color = "white";
+overlay.style.opacity = "0";
 
 document.addEventListener("DOMContentLoaded", function() { 
     document.querySelector("body").insertAdjacentElement("beforeend", overlay);
@@ -58,16 +59,16 @@ chrome.runtime.onMessage.addListener((msg) => {
   const data = msg.data;
 
   const avg = data.reduce((a, b) => a + b, 0) / data.length;
-  const intensity = avg / 255;
+  const intensity = Math.max(...data) / 255;//avg / 255;
 
   if (!canvas) createCanvas();
   canvas.style.opacity = "" + r.opacity / 100;
-  overlay.style.opacity = "" + r.opacity / 100;
+  overlay.style.opacity = "" + r.opacity * intensity / 100;
   draw(intensity, data, r.curr, r.goal);
 
   var out = "";
   for (var i = 0; i < data.length; i += 10) {
-    for (var j = 0; j < data[i] / 10; j++) out += "-";
+    for (var j = 0; j < data[i]**2/255 / 10; j++) out += "‒";
     out += "<br>";
   }
   overlay.innerHTML = out;
@@ -155,9 +156,9 @@ chrome.runtime.onMessage.addListener((msg) => {
   function drawBlob(x, y, radius, hue, sat, light, volFactor) {
     try {
       const grad = ctx.createRadialGradient(x, y, radius * 0.2, x, y, radius);
-      const alpha = (100 - volFactor * 100) * 0.01;
+      const alpha = ((-4*volFactor*(volFactor - 1))**2 * .5 * 100) * 0.01;
       grad.addColorStop(0, `hsla(${hue}, ${sat}%, ${light + 10}%, ${alpha})`);
-      grad.addColorStop(0.6, `hsla(${hue}, ${sat}%, ${light}%, ${alpha * 0.8})`);
+      grad.addColorStop(0.5, `hsla(${hue}, ${sat}%, ${light}%, ${alpha * 0.2})`);
       grad.addColorStop(1, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -202,18 +203,18 @@ chrome.runtime.onMessage.addListener((msg) => {
         if (blob.y < -0.1) blob.y = 1.1;
         if (blob.y > 1.1) blob.y = -0.1;
 
-        const baseRadius = Math.min(width, height) * (data[i*20]/255)**2 * 0.1;
+        const baseRadius = Math.min(width, height) * (data[i*20]/255)**2 * 3 * 0.1;
         const pulse = Math.sin(performance.now() * 0.005 + blob.phase) * 0.1 + 1;
         const radius = baseRadius * pulse;
         const screenX = blob.x * width;
         const screenY = blob.y * height;
 
-        const mix = (i / BLOB_COUNT) * 0.5 + 0.25;
+        const mix = (i / (BLOB_COUNT - 1));
         const hue = (goalColor.h * (1 - mix) + currentColor.h * mix) % 360;
         const sat = goalColor.s * (1 - mix) + currentColor.s * mix;
         const light = goalColor.l * (1 - mix) + currentColor.l * mix;
 
-        drawBlob(screenX, screenY, radius, hue, sat, light, (data[i*20]/255)**2);
+        drawBlob(screenX, screenY, radius, hue, sat, light, (data[i*20]/255));
       });
     } catch (e) {
       console.error("Content: draw error:", e);
