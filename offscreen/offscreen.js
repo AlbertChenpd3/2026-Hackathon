@@ -16,7 +16,7 @@ async function startCapture(streamId, tabId) {
   const audioContext = new AudioContext();
   const source = audioContext.createMediaStreamSource(stream);
   const analyser = audioContext.createAnalyser();
-  analyser.fftSize = 256;
+  analyser.fftSize = 2048;
   source.connect(analyser);
   source.connect(audioContext.destination);
 
@@ -31,7 +31,7 @@ async function startCapture(streamId, tabId) {
       data: Array.from(data)
     });
 
-    setTimeout(loop, 20);
+    setTimeout(loop, 1000/60);
   }
 
   loop();

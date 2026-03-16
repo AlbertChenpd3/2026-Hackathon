@@ -63,18 +63,44 @@ chrome.runtime.onMessage.addListener((msg) => {
   const avg = data.reduce((a, b) => a + b, 0) / data.length;
   const intensity = Math.max(...data) / 255;//avg / 255;
 
-  if (!canvas) createCanvas();
+  if (!canvas) {createCanvas(); canvas.style.visibility = overlay.style.visibility;}
   canvas.style.opacity = "" + r.opacity2 / 100;
   overlay.style.opacity = "" + r.opacity * intensity / 100;
   draw(intensity, data, r.curr, r.goal);
 
   var out = "";
-  for (var i = 0; i < data.length; i += 2) {
-    for (var j = 0; j < data[i]**2/255 / 10; j++) out += "‒";
+  for (var i = 0; i < 128; i++) {
+    var l = getData(data, i / 128, (i + 1) / 128);
+    for (var j = 0; j < Math.round((l/255) * 20); j++) out += "‒";
     out += "<br>";
   }
   overlay.innerHTML = out;
 });
+
+function getData(data, start, end) { // start and end are 0..1
+  var s = (10**(start * Math.log10(1 + 22050 / 700)) - 1) * 700 / 22050;
+  var e = (10**(end * Math.log10(1 + 22050 / 700)) - 1) * 700 / 22050;
+  // return 1/(end-start) * integral from log2(1+start) to log2(1+end) of f(2**x-1)
+  var g = x => Math.log10(1 + x * 22050 / 700) / Math.log10(1 + 22050 / 700)
+  var out = 0;
+  var snext = Math.ceil(s * (data.length - 1)) / (data.length - 1);
+  var eprev = Math.floor(e * (data.length - 1)) / (data.length - 1);
+  if (snext > eprev) {
+    out = (getDataPoint(data, s) + getDataPoint(data, e)) / 2 * (g(e) - g(s));
+  } else {
+    out += (getDataPoint(data, s) + getDataPoint(data, snext)) / 2 * (g(snext) - g(s));
+    out += (getDataPoint(data, e) + getDataPoint(data, eprev)) / 2 * (g(e) - g(eprev));
+    for (var i = snext + .5 / (data.length - 1); i < eprev; i += 1 / (data.length - 1)) {
+      out += getDataPoint(data, i) * (g(i + .5 / (data.length - 1)) - g(i - .5 / (data.length - 1)));
+    }
+  }
+  return 1 / (end - start) * out;
+}
+
+function getDataPoint(data, x) {
+  var i = (data.length - 1) * x;
+  return data[Math.floor(i)] * (1 - i%1) + data[Math.ceil(i)] * (i%1);
+}
 
 // ----
 
@@ -96,6 +122,7 @@ chrome.runtime.onMessage.addListener((msg) => {
         y: Math.random(),
         vx: (Math.random() - 0.5) * 0.02,
         vy: (Math.random() - 0.5) * 0.02,
+        direction: Math.random() * Math.PI * 2,
         radius: 0.05 + Math.random() * 0.1,
         phase: Math.random() * Math.PI * 2
       });
@@ -158,9 +185,9 @@ chrome.runtime.onMessage.addListener((msg) => {
   function drawBlob(x, y, radius, hue, sat, light, volFactor) {
     try {
       const grad = ctx.createRadialGradient(x, y, radius * 0.2, x, y, radius);
-      const alpha = ((-4*volFactor*(volFactor - 1))**2 * .3 * 100) * 0.01;
+      const alpha = ((-4*volFactor*(volFactor - 1))**4);
       grad.addColorStop(0, `hsla(${hue}, ${sat}%, ${light + (100 - light) / 2}%, ${alpha})`);
-      grad.addColorStop((-4*volFactor*(volFactor - 1))**2*(.5**.5), `hsla(${hue}, ${sat}%, ${light}%, ${alpha * 0.2})`);
+      grad.addColorStop(.5**.5, `hsla(${hue}, ${sat}%, ${light}%, ${alpha * 0.2})`);
       grad.addColorStop(1, `hsla(${hue}, ${sat}%, ${light}%, 0)`);
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -185,7 +212,7 @@ chrome.runtime.onMessage.addListener((msg) => {
     goalMood = goalMoodVal || goalMood;
 
     try {
-      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(0, 0, width, height);
 
       const volFactor = Math.min(volume / 255, 1.0);
@@ -193,24 +220,29 @@ chrome.runtime.onMessage.addListener((msg) => {
       const currentColor = moodToColor(currentMood);
 
       blobs.forEach((blob, i) => {
-        blob.vx += (Math.random() - 0.5) * 0.002 + (Math.random() - 0.5) * (data[i*4]/255)**2 * 0.01;
-        blob.vy += (Math.random() - 0.5) * 0.002 + (Math.random() - 0.5) * (data[i*4]/255)**2 * 0.01;
-        blob.vx *= 0.99;
-        blob.vy *= 0.99;
+        var D = getData(data, i / BLOB_COUNT, (i + 1) / BLOB_COUNT);
+
+        //blob.vx += ((Math.random() - 0.5) * 0.002 + (Math.random() - 0.5) * 0.01) * (D/255);
+        //blob.vy += ((Math.random() - 0.5) * 0.002 + (Math.random() - 0.5) * 0.01) * (D/255);
+        //blob.vx *= 0.99;
+        //blob.vy *= 0.99;
+        blob.direction = (blob.direction + (Math.random() - 0.5) * 0.1 * Math.PI * 2) % (Math.PI * 2);
+        blob.vx = Math.cos(blob.direction) * (D/255) * .2;
+        blob.vy = Math.sin(blob.direction) * (D/255) * .2;
         if (r.direction === 'static' || r.direction === 'vert') blob.vx = 0;
         if (r.direction === 'static' || r.direction === 'horiz') blob.vy = 0;
         else if (r.direction === 'diag') blob.vy = blob.vx;// * (blob.vy > 0 ? 1 : -1);
-        blob.x += blob.vx / 5;
-        blob.y += blob.vy / 5;
+        blob.x += blob.vx / 50;
+        blob.y += blob.vy / 50;
 
         if (blob.x < -0.1) blob.x = 1.1;
         if (blob.x > 1.1) blob.x = -0.1;
         if (blob.y < -0.1) blob.y = 1.1;
         if (blob.y > 1.1) blob.y = -0.1;
 
-        const baseRadius = Math.min(width, height) * (data[i*4]/255)**2 * 3 * 0.1;
+        const baseRadius = Math.min(width, height) * 0.15;
         const pulse = Math.sin(performance.now() * 0.005 + blob.phase) * 0.1 + 1;
-        const radius = baseRadius * pulse;
+        const radius = baseRadius * (D/255);// * pulse;
         const screenX = blob.x * width;
         const screenY = blob.y * height;
 
@@ -221,13 +253,14 @@ chrome.runtime.onMessage.addListener((msg) => {
         const sat = goalColor.s * (1 - mix) + currentColor.s * mix;
         const light = goalColor.l * (1 - mix) + currentColor.l * mix;
 
-        drawBlob(screenX, screenY, radius, hue, sat, light, (data[i*4]/255));
+        if (radius > 0) drawBlob(screenX, screenY, radius, hue, sat, light, (D/255));
 
-        if (!data[i*4] || !radius) blobs[i] = {
+        if (!D || !radius) blobs[i] = {
           x: Math.random(),
           y: Math.random(),
           vx: (Math.random() - 0.5) * 0.02,
           vy: (Math.random() - 0.5) * 0.02,
+          direction: Math.random() * Math.PI * 2,
           radius: 0.05 + Math.random() * 0.1,
           phase: Math.random() * Math.PI * 2
         };
